@@ -1,4 +1,36 @@
--- [[ DEOBFUSCATED BY @mommy owner]] --
+-- ========================================
+-- 🔐 KEY VALIDATION (walang GUI, gamit ang getgenv)
+-- ========================================
+local validationURL = "https://your-render-app.onrender.com/validate"  -- PALITAN
+
+-- Kunin ang key mula sa getgenv() na itinakda ng loader
+local key = getgenv().Key
+if not key or key == "" then
+    warn("No key provided. Script will not load.")
+    return
+end
+
+-- I-validate ang key sa server
+local function validateKey(k)
+    local data = '{"key":"' .. k .. '"}'
+    local success, response = pcall(function()
+        return game:HttpGet(validationURL, true, data)
+    end)
+    if not success then
+        warn("Validation error: " .. tostring(response))
+        return false
+    end
+    return string.find(response, '"valid":true') and true or false
+end
+
+if not validateKey(key) then
+    warn("Invalid or expired key. Script will not load.")
+    return
+end
+
+-- ========================================
+-- 🚀 MAIN HUB (ORIGINAL SCRIPT MO)
+-- ========================================
 
 -- // [1] SERVICES //
 local Players = game:GetService("Players")
@@ -20,7 +52,7 @@ local CONFIG = {
     },
 
     Size = {
-        MainFrame = UDim2.new(0, 240, 0, 210), -- Increased height to give plenty of space for bottom text
+        MainFrame = UDim2.new(0, 240, 0, 210),
         TitleFrame = UDim2.new(1, 0, 0, 40),
         ContentFrame = UDim2.new(1, -20, 1, -55),
         Button = UDim2.new(1, 0, 0, 40),
@@ -159,7 +191,7 @@ local function createGUI()
     AntiBatButton.Size = CONFIG.Size.Button
     AntiBatButton.BackgroundColor3 = CONFIG.Colors.ButtonBg
     AntiBatButton.BackgroundTransparency = 0.2
-    AntiBatButton.BorderSizePixel = 0 -- Removed legacy border pixel artifacts
+    AntiBatButton.BorderSizePixel = 0
     AntiBatButton.Font = CONFIG.Font
     AntiBatButton.TextSize = 14
     AntiBatButton.AutoButtonColor = false
@@ -178,7 +210,7 @@ local function createGUI()
     InfJumpButton.Size = CONFIG.Size.Button
     InfJumpButton.BackgroundColor3 = CONFIG.Colors.ButtonBg
     InfJumpButton.BackgroundTransparency = 0.2
-    InfJumpButton.BorderSizePixel = 0 -- Removed legacy border pixel artifacts
+    InfJumpButton.BorderSizePixel = 0
     InfJumpButton.Font = CONFIG.Font
     InfJumpButton.TextSize = 14
     InfJumpButton.AutoButtonColor = false
@@ -211,7 +243,7 @@ local function createGUI()
     BindButton.Position = CONFIG.Position.BindButton
     BindButton.Size = CONFIG.Size.BindButton
     BindButton.BackgroundColor3 = CONFIG.Colors.BindBg
-    BindButton.BorderSizePixel = 0 -- Removed legacy border pixel artifacts
+    BindButton.BorderSizePixel = 0
     BindButton.Font = CONFIG.Font
     BindButton.Text = CONFIG.ToggleKey.Name
     BindButton.TextColor3 = CONFIG.Colors.TextPrimary
@@ -273,7 +305,7 @@ local function setupLogic()
         end
     end)
 
-    -- Infinite Jump Logic from Source Code File
+    -- Infinite Jump Logic
     UserInputService.JumpRequest:Connect(function()
         if CONFIG.Toggles.InfJump then
             local hrp = getHRP()
@@ -283,7 +315,7 @@ local function setupLogic()
         end
     end)
 
-    -- Anti-Bat Logic from Source Code File
+    -- Anti-Bat Logic
     RunService.PostSimulation:Connect(function()
         if CONFIG.Toggles.AntiBat then
             local hrp = getHRP()
