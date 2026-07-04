@@ -1,7 +1,7 @@
 -- ========================================
 -- 🔐 KEY VALIDATION (walang GUI, gamit ang getgenv)
 -- ========================================
-local validationURL = "https://your-render-app.onrender.com/validate"  -- PALITAN
+local validationURL = "https://bot-5iih.onrender.com"  -- PALITAN
 
 -- Kunin ang key mula sa getgenv() na itinakda ng loader
 local key = getgenv().Key
