@@ -1,35 +1,52 @@
 -- ========================================
--- 🔐 KEY VALIDATION (walang GUI, gamit ang getgenv)
+-- 🔐 KEY VALIDATION
 -- ========================================
-local validationURL = "https://bot-5iih.onrender.com"  -- PALITAN
+local validationURL = "https://bot-5iih.onrender.com/validate"  -- ✅ CORRECT
 
--- Kunin ang key mula sa getgenv() na itinakda ng loader
 local key = getgenv().Key
 if not key or key == "" then
-    warn("No key provided. Script will not load.")
+    warn("❌ No key provided. Script will not load.")
     return
 end
 
--- I-validate ang key sa server
+-- Validate key sa server
 local function validateKey(k)
-    local data = '{"key":"' .. k .. '"}'
+    local requestBody = '{"key":"' .. k .. '"}'
+    
     local success, response = pcall(function()
-        return game:HttpGet(validationURL, true, data)
+        return game:HttpPost(
+            validationURL,
+            requestBody,
+            Enum.HttpContentType.ApplicationJson,
+            true
+        )
     end)
+    
     if not success then
-        warn("Validation error: " .. tostring(response))
+        warn("❌ Validation error: " .. tostring(response))
         return false
     end
-    return string.find(response, '"valid":true') and true or false
+    
+    -- Check if response contains "valid":true
+    if response and string.find(response, '"valid"%s*:%s*true') then
+        print("✅ Key validated successfully!")
+        return true
+    else
+        warn("❌ Invalid or expired key")
+        print("Response: " .. tostring(response))
+        return false
+    end
 end
 
 if not validateKey(key) then
-    warn("Invalid or expired key. Script will not load.")
+    warn("🚫 Access denied. Script will not load.")
     return
 end
 
+print("✅ Key validation passed! Loading main script...")
+
 -- ========================================
--- 🚀 MAIN HUB (ORIGINAL SCRIPT MO)
+-- 🚀 MAIN HUB (YOUR ORIGINAL SCRIPT)
 -- ========================================
 
 -- // [1] SERVICES //
