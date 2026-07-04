@@ -2,7 +2,7 @@
 -- 🔐 KEY VALIDATION with Roblox binding & error UI
 -- ========================================
 
-local validationURL = "https://your-bot-url.com/validate"  -- PALITAN ng iyong URL
+local validationURL = "https://bot-5iih.onrender.com"  -- PALITAN ng iyong URL
 local key = getgenv().Key
 
 if not key or key == "" then
