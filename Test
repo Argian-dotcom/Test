@@ -1,18 +1,40 @@
 -- ========================================
--- 🔐 KEY VALIDATION
+-- 🔐 KEY VALIDATION (with Roblox binding)
 -- ========================================
-local validationURL = "https://bot-5iih.onrender.com/validate"  -- ✅ CORRECT
 
+local validationURL = "https://bot-5iih.onrender.com/validate"  -- ✅ CORRECT
 local key = getgenv().Key
+
 if not key or key == "" then
     warn("❌ No key provided. Script will not load.")
     return
 end
 
--- Validate key sa server
+-- Function to show error screen (unchanged except message)
+local function showErrorScreen(errorMessage)
+    -- (same as your existing function, but message can be passed)
+    -- I-save mo na lang ito mula sa iyong orihinal na code
+end
+
+-- Validate key sa server (kasama ang Roblox User ID)
 local function validateKey(k)
-    local requestBody = '{"key":"' .. k .. '"}'
-    
+    local Players = game:GetService("Players")
+    local HttpService = game:GetService("HttpService")
+    local localPlayer = Players.LocalPlayer
+
+    if not localPlayer then
+        warn("❌ No LocalPlayer found")
+        showErrorScreen("Error: Cannot identify Roblox user.")
+        return false
+    end
+
+    local robloxUserId = localPlayer.UserId
+
+    local requestBody = HttpService:JSONEncode({
+        key = k,
+        robloxUserId = tostring(robloxUserId)
+    })
+
     local success, response = pcall(function()
         return game:HttpPost(
             validationURL,
@@ -21,30 +43,35 @@ local function validateKey(k)
             true
         )
     end)
-    
+
     if not success then
         warn("❌ Validation error: " .. tostring(response))
+        showErrorScreen("Validation Server Error\n\n" .. tostring(response))
         return false
     end
-    
-    -- Check if response contains "valid":true
-    if response and string.find(response, '"valid"%s*:%s*true') then
+
+    -- I‑parse ang JSON response (kung available ang HttpService:JSONDecode)
+    local parsed
+    pcall(function()
+        parsed = HttpService:JSONDecode(response)
+    end)
+
+    if parsed and parsed.valid == true then
         print("✅ Key validated successfully!")
         return true
     else
-        warn("❌ Invalid or expired key")
-        print("Response: " .. tostring(response))
+        local msg = parsed and parsed.message or "Unknown error"
+        warn("❌ Invalid or expired key: " .. msg)
+        showErrorScreen("Access Denied\n\n" .. msg .. "\n\nPlease contact the administrator.")
         return false
     end
 end
 
 if not validateKey(key) then
-    warn("🚫 Access denied. Script will not load.")
     return
 end
 
 print("✅ Key validation passed! Loading main script...")
-
 -- ========================================
 -- 🚀 MAIN HUB (YOUR ORIGINAL SCRIPT)
 -- ========================================
