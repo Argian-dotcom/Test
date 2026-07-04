@@ -1,8 +1,8 @@
 -- ========================================
--- 🔐 KEY VALIDATION (with Roblox binding)
+-- 🔐 KEY VALIDATION with Roblox binding & error UI
 -- ========================================
 
-local validationURL = "https://bot-5iih.onrender.com/validate"  -- ✅ CORRECT
+local validationURL = "https://your-bot-url.com/validate"  -- PALITAN ng iyong URL
 local key = getgenv().Key
 
 if not key or key == "" then
@@ -10,10 +10,91 @@ if not key or key == "" then
     return
 end
 
--- Function to show error screen (unchanged except message)
-local function showErrorScreen(errorMessage)
-    -- (same as your existing function, but message can be passed)
-    -- I-save mo na lang ito mula sa iyong orihinal na code
+-- Function to show error screen
+local function showErrorScreen(errorMessage, leaveButtonText)
+    local Players = game:GetService("Players")
+    local CoreGui = game:GetService("CoreGui")
+    local LocalPlayer = Players.LocalPlayer
+
+    local ErrorGui = Instance.new("ScreenGui")
+    ErrorGui.Name = "ErrorScreen"
+    ErrorGui.ResetOnSpawn = false
+    ErrorGui.Parent = CoreGui
+
+    local BackgroundFrame = Instance.new("Frame")
+    BackgroundFrame.Size = UDim2.new(1, 0, 1, 0)
+    BackgroundFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    BackgroundFrame.BackgroundTransparency = 0.5
+    BackgroundFrame.Parent = ErrorGui
+
+    local ErrorContainer = Instance.new("Frame")
+    ErrorContainer.Size = UDim2.new(0, 400, 0, 250)
+    ErrorContainer.Position = UDim2.new(0.5, -200, 0.5, -125)
+    ErrorContainer.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    ErrorContainer.BorderSizePixel = 0
+    ErrorContainer.Parent = ErrorGui
+
+    local Corner = Instance.new("UICorner")
+    Corner.CornerRadius = UDim.new(0, 15)
+    Corner.Parent = ErrorContainer
+
+    local Stroke = Instance.new("UIStroke")
+    Stroke.Color = Color3.fromRGB(255, 50, 50)
+    Stroke.Thickness = 2
+    Stroke.Parent = ErrorContainer
+
+    local TitleLabel = Instance.new("TextLabel")
+    TitleLabel.Size = UDim2.new(1, 0, 0, 60)
+    TitleLabel.BackgroundColor3 = Color3.fromRGB(40, 20, 20)
+    TitleLabel.BorderSizePixel = 0
+    TitleLabel.Font = Enum.Font.GothamBold
+    TitleLabel.Text = "❌ ACCESS DENIED"
+    TitleLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
+    TitleLabel.TextSize = 18
+    TitleLabel.Parent = ErrorContainer
+
+    local TitleCorner = Instance.new("UICorner")
+    TitleCorner.CornerRadius = UDim.new(0, 15)
+    TitleCorner.Parent = TitleLabel
+
+    local MessageLabel = Instance.new("TextLabel")
+    MessageLabel.Size = UDim2.new(1, -20, 0, 80)
+    MessageLabel.Position = UDim2.new(0, 10, 0, 70)
+    MessageLabel.BackgroundTransparency = 1
+    MessageLabel.Font = Enum.Font.Gotham
+    MessageLabel.Text = errorMessage or "Invalid Key"
+    MessageLabel.TextColor3 = Color3.fromRGB(255, 150, 150)
+    MessageLabel.TextSize = 14
+    MessageLabel.TextWrapped = true
+    MessageLabel.TextXAlignment = Enum.TextXAlignment.Center
+    MessageLabel.TextYAlignment = Enum.TextYAlignment.Top
+    MessageLabel.Parent = ErrorContainer
+
+    local LeaveButton = Instance.new("TextButton")
+    LeaveButton.Size = UDim2.new(0, 150, 0, 40)
+    LeaveButton.Position = UDim2.new(0.5, -75, 1, -50)
+    LeaveButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+    LeaveButton.BorderSizePixel = 0
+    LeaveButton.Font = Enum.Font.GothamBold
+    LeaveButton.Text = leaveButtonText or "Leave Game"
+    LeaveButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    LeaveButton.TextSize = 14
+    LeaveButton.Parent = ErrorContainer
+
+    local ButtonCorner = Instance.new("UICorner")
+    ButtonCorner.CornerRadius = UDim.new(0, 8)
+    ButtonCorner.Parent = LeaveButton
+
+    LeaveButton.MouseEnter:Connect(function()
+        LeaveButton.BackgroundColor3 = Color3.fromRGB(220, 80, 80)
+    end)
+    LeaveButton.MouseLeave:Connect(function()
+        LeaveButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+    end)
+
+    LeaveButton.MouseButton1Click:Connect(function()
+        Players:LeaveGame()
+    end)
 end
 
 -- Validate key sa server (kasama ang Roblox User ID)
@@ -24,7 +105,7 @@ local function validateKey(k)
 
     if not localPlayer then
         warn("❌ No LocalPlayer found")
-        showErrorScreen("Error: Cannot identify Roblox user.")
+        showErrorScreen("Error: Cannot identify Roblox user.", "Leave Game")
         return false
     end
 
@@ -46,11 +127,11 @@ local function validateKey(k)
 
     if not success then
         warn("❌ Validation error: " .. tostring(response))
-        showErrorScreen("Validation Server Error\n\n" .. tostring(response))
+        showErrorScreen("Validation Server Error\n\n" .. tostring(response), "Leave Game")
         return false
     end
 
-    -- I‑parse ang JSON response (kung available ang HttpService:JSONDecode)
+    -- I‑parse ang JSON response
     local parsed
     pcall(function()
         parsed = HttpService:JSONDecode(response)
@@ -62,12 +143,21 @@ local function validateKey(k)
     else
         local msg = parsed and parsed.message or "Unknown error"
         warn("❌ Invalid or expired key: " .. msg)
-        showErrorScreen("Access Denied\n\n" .. msg .. "\n\nPlease contact the administrator.")
+
+        -- Tukuyin ang mensahe at button text batay sa error
+        local errorMsg = "Invalid or Expired Key\n\n" .. msg
+        local buttonText = "Leave Game"
+        if parsed and parsed.already_used then
+            errorMsg = "ALREADY USE KEY\n\nThis key has already been used by another Roblox account.\n\n" .. msg
+            buttonText = "Leave Game"
+        end
+        showErrorScreen(errorMsg, buttonText)
         return false
     end
 end
 
 if not validateKey(key) then
+    warn("🚫 Access denied. Script will not load.")
     return
 end
 
